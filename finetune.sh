@@ -1,14 +1,14 @@
 #!/bin/bash
+# sh finetune.sh [version]
 
-# deepspeed llava/train/train_mem.py \
-deepspeed llava/train/train_mem.py \
+deepspeed llava/train/train_xformers.py \
     --deepspeed ./scripts/zero3.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
-    --version v1 \
-    --data_path ./Dataset/data.json \
-    --image_folder ./Dataset/Food Images/Food Images/ \
-    --vision_tower ./clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter ./llava-v1.5-7b/mm_projector.bin \
+    --version $1 \
+    --data_path ./dataset/dataset-200m/data.json \
+    --image_folder ./dataset/dataset-200m/images/ \
+    --vision_tower openai/clip-vit-large-patch14-336 \
+    --pretrain_mm_mlp_adapter liuhaotian/llava-v1.5-7b/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
@@ -16,7 +16,7 @@ deepspeed llava/train/train_mem.py \
     --image_aspect_ratio pad \
     --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-7b-small-finetune \
+    --output_dir ./checkpoints/finetune/version-$1 \
     --num_train_epochs 1 \
     --per_device_train_batch_size 16 \
     --per_device_eval_batch_size 4 \
