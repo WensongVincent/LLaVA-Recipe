@@ -7,22 +7,22 @@ import random
 def data_process(dataset):
     pwd = os.getcwd() + '/'
     csv_file_path = pwd + dataset + '/data.csv'
-    json_file_path = pwd + dataset + '/data.json'
+    json_file_path = pwd + dataset
     path_prefix = pwd + dataset + '/images/'
     random.seed(42)
     # Initialize an empty list to hold the JSON data
     data = []
     prompts = [
-        "<image>\nCould you guide me on how to prepare the dish displayed in this image?"
-        "<image>\nI'm intrigued by the meal in this picture. Can you explain how to cook it?"
-        "<image>\nWhat's the recipe for the food shown in this photo?"
-        "<image>\nHow do I make the dish that's in this image?"
-        "<image>\nCould you provide the cooking steps for the meal depicted here?"
-        "<image>\nWhat are the instructions to replicate the dish shown in the picture?"
-        "<image>\nCan you help me understand how to cook what's in this photo?"
-        "<image>\nHow is the food in this image prepared?"
-        "<image>\nWhat's the method for cooking the dish pictured here?"
-        "<image>\nI'd love to try making the food in this picture. How do I do that?"
+        "<image>\nCould you guide me on how to prepare the dish displayed in this image?",
+        "<image>\nI'm intrigued by the meal in this picture. Can you explain how to cook it?",
+        "<image>\nWhat's the recipe for the food shown in this photo?",
+        "<image>\nHow do I make the dish that's in this image?",
+        "<image>\nCould you provide the cooking steps for the meal depicted here?",
+        "<image>\nWhat are the instructions to replicate the dish shown in the picture?",
+        "<image>\nCan you help me understand how to cook what's in this photo?",
+        "<image>\nHow is the food in this image prepared?",
+        "<image>\nWhat's the method for cooking the dish pictured here?",
+        "<image>\nI'd love to try making the food in this picture. How do I do that?",
     ]
 
     # Open the CSV file for reading
@@ -36,6 +36,8 @@ def data_process(dataset):
             image_name = row['Image_Name']
             id_value = image_name  # Assuming Image_Name can serve as a unique ID; adjust if necessary
             image_value = f"{path_prefix}{image_name}.jpg"
+            if os.path.isfile(image_value) is False:
+                continue
             conversations = [
                 {
                     "from": "human",
@@ -58,12 +60,24 @@ def data_process(dataset):
             data.append(json_object)
 
     # Serialize the list of JSON objects to a JSON string
-    json_data = json.dumps(data, ensure_ascii=False, indent=4)
+    
+    # todo: change this in other dataset
+    random.shuffle(data)
+    train, val, test = data[:9429], data[9429:12123], data[12123:] # only for 200m dataset
+    train_json = json.dumps(train, ensure_ascii=False, indent=4)
+    val_json = json.dumps(val, ensure_ascii=False, indent=4)
+    test_json = json.dumps(test, ensure_ascii=False, indent=4)
 
     # Write the JSON string to the output file
-    with open(json_file_path, mode='w', encoding='utf-8') as json_file:
-        json_file.write(json_data)
+    with open(json_file_path + '/train.json', mode='w', encoding='utf-8') as json_file:
+        json_file.write(train_json)
+    with open(json_file_path + '/val.json', mode='w', encoding='utf-8') as json_file:
+        json_file.write(val_json)
+    with open(json_file_path + '/test.json', mode='w', encoding='utf-8') as json_file:
+        json_file.write(test_json)
 
+    print(f"{len(data)} data")
+    print(len(train), len(val), len(test))
     print("CSV has been converted to JSON successfully.")
 
 parser = argparse.ArgumentParser(description='argparse', formatter_class=argparse.RawTextHelpFormatter)
