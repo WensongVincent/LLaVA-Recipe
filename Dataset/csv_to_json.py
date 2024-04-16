@@ -2,15 +2,28 @@ import csv
 import json
 import os
 import argparse
+import random
 
 def data_process(dataset):
     pwd = os.getcwd() + '/'
     csv_file_path = pwd + dataset + '/data.csv'
     json_file_path = pwd + dataset + '/data.json'
-    path_prefix = pwd + dataset + '/images'
-
+    path_prefix = pwd + dataset + '/images/'
+    random.seed(42)
     # Initialize an empty list to hold the JSON data
     data = []
+    prompts = [
+        "<image>\nCould you guide me on how to prepare the dish displayed in this image?"
+        "<image>\nI'm intrigued by the meal in this picture. Can you explain how to cook it?"
+        "<image>\nWhat's the recipe for the food shown in this photo?"
+        "<image>\nHow do I make the dish that's in this image?"
+        "<image>\nCould you provide the cooking steps for the meal depicted here?"
+        "<image>\nWhat are the instructions to replicate the dish shown in the picture?"
+        "<image>\nCan you help me understand how to cook what's in this photo?"
+        "<image>\nHow is the food in this image prepared?"
+        "<image>\nWhat's the method for cooking the dish pictured here?"
+        "<image>\nI'd love to try making the food in this picture. How do I do that?"
+    ]
 
     # Open the CSV file for reading
     with open(csv_file_path, mode='r', encoding='utf-8') as csv_file:
@@ -26,7 +39,7 @@ def data_process(dataset):
             conversations = [
                 {
                     "from": "human",
-                    "value": "<image>\nHow can I cook it?"
+                    "value": prompts[random.randint(0,9)]
                 },
                 {
                     "from": "gpt",
