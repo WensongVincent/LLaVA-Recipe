@@ -1,26 +1,35 @@
 #!/bin/bash
-# sh finetune.sh [version]
+# sh finetune.sh [7b/13b] [version] 
 
-deepspeed llava/train/train_xformers.py \
+if [$1 -eq 7b]
+then
+    projector=llava7b-mm_projector.bin
+fi
+
+if [$1 -eq 13b]
+then
+    projector=llava13b-mm_projector.bin
+fi
+
+deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
-    --model_name_or_path lmsys/vicuna-7b-v1.5 \
-    --version $1 \
-    --data_path ./dataset/dataset-200m/data.json \
-    --image_folder ./dataset/dataset-200m/images/ \
+    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
+    --model_name_or_path lmsys/vicuna-$1-v1.5 \
+    --version v1 \
+    --data_path ./Dataset/dataset-200m/val.json \
+    --image_folder ./dataset/dataset-200m/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter liuhaotian/llava-v1.5-7b/mm_projector.bin \
     --mm_projector_type mlp2x_gelu \
+    --pretrain_mm_mlp_adapter ./mm_projectors/$projector \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
-    --image_aspect_ratio pad \
-    --group_by_modality_length True \
     --bf16 True \
-    --output_dir ./checkpoints/finetune/version-$1 \
+    --output_dir ./checkpoints/finetune/version-$1-$2 \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
+    --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 50000 \
@@ -33,6 +42,6 @@ deepspeed llava/train/train_xformers.py \
     --tf32 True \
     --model_max_length 2048 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 4 \
     --lazy_preprocess True \
+    --dataloader_num_workers 4 \
     --report_to wandb

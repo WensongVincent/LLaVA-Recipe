@@ -1,29 +1,30 @@
 #!/bin/bash
-# sh pretrain.sh [7b/13b] [version]
+# sh finetune.sh [7b/13b] [version] [version2]
 
 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero3.json \
+    --lora_enable True --lora_r 128 --lora_alpha 256 --mm_projector_lr 2e-5 \
     --model_name_or_path lmsys/vicuna-$1-v1.5 \
-    --version $2 \
-    --data_path ./dataset/dataset-200m/train.json \
+    --version v1 \
+    --data_path ./Dataset/dataset-200m/val.json \
     --image_folder ./dataset/dataset-200m/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
-    --tune_mm_mlp_adapter True \
+    --pretrain_mm_mlp_adapter ./checkpoints/pretrain/version \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir ./checkpoints/pretrain/version-$1-$2 \
+    --output_dir ./checkpoints/finetune/version-$1-$2 \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 8 \
     --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 24000 \
+    --save_steps 50000 \
     --save_total_limit 1 \
-    --learning_rate 1e-3 \
+    --learning_rate 2e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
@@ -31,6 +32,6 @@ deepspeed llava/train/train_mem.py \
     --tf32 True \
     --model_max_length 2048 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 4 \
     --lazy_preprocess True \
+    --dataloader_num_workers 4 \
     --report_to wandb
