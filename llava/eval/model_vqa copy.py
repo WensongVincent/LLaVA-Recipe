@@ -32,19 +32,6 @@ def eval_model(args):
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-    
-    
-    model_path1 = os.path.expanduser("/root/LLaVA/checkpoints/llava-llama-2-7b-chat-finetune_lora")
-    model_name1 = get_model_name_from_path(model_path1)
-    tokenizer1, model1, image_processor1, context_len1 = load_pretrained_model(model_path1, "lmsys/vicuna-7b-v1.5", model_name1)
-    model.config = model1.config
-    
-    
-    
-    
-    
-    
-    
 
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
