@@ -25,29 +25,49 @@ def data_process(dataset):
         "<image>\nI'd love to try making the food in this picture. How do I do that?",
     ]
 
+    num_train = 9429
+    num_val = 12123
+    
     # Open the CSV file for reading
     with open(csv_file_path, mode='r', encoding='utf-8') as csv_file:
         # Create a CSV reader object
         csv_reader = csv.DictReader(csv_file)
         
         # Loop through each row in the CSV file
+        count = 0
         for row in csv_reader:
             # Extract and format data from the CSV row
+            count += 1
             image_name = row['Image_Name']
             id_value = image_name  # Assuming Image_Name can serve as a unique ID; adjust if necessary
             image_value = f"{path_prefix}{image_name}.jpg"
             if os.path.isfile(image_value) is False:
                 continue
-            conversations = [
-                {
-                    "from": "human",
-                    "value": prompts[random.randint(0,9)]
-                },
-                {
-                    "from": "gpt",
-                    "value": f"{row['Ingredients']} {row['Instructions']}"
-                }
-            ]
+            if count < num_train:
+                conversations = [
+                    {
+                        "from": "human",
+                        "value": prompts[random.randint(0,9)]
+                    },
+                    {
+                        "from": "gpt",
+                        # "value": f"{row['Ingredients']} {row['Instructions']}"
+                        "value": f"{row['Instructions']}"
+                    }
+                ]
+            else:
+                conversations = [
+                    {
+                        "from": "human",
+                        "value": prompts[random.randint(0,9)]
+                    },
+                    {
+                        "from": "gpt",
+                        "value": f"{row['Ingredients']} {row['Instructions']}"
+                        # "value": f"{row['Instructions']}"
+                    }
+                ]
+            
             
             # Construct the JSON object for this row
             json_object = {
@@ -62,8 +82,10 @@ def data_process(dataset):
     # Serialize the list of JSON objects to a JSON string
     
     # todo: change this in other dataset
-    random.shuffle(data)
-    train, val, test = data[:9429], data[9429:12123], data[12123:] # only for 200m dataset
+    train, val, test = data[:num_train], data[num_train:num_val], data[num_val:] # only for 200m dataset
+    random.shuffle(train)
+    random.shuffle(val)
+    random.shuffle(test)
     train_json = json.dumps(train, ensure_ascii=False, indent=4)
     val_json = json.dumps(val, ensure_ascii=False, indent=4)
     test_json = json.dumps(test, ensure_ascii=False, indent=4)
