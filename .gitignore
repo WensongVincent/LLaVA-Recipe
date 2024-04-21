@@ -14,6 +14,8 @@ dist
 !**/alpaca-data-conversation.json
 **images
 **raw_images
+/dataset/recipe1m/layer1.json
+/dataset/recipe1m/layer2.json
 
 # Editor
 .idea
