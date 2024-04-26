@@ -1,0 +1,39 @@
+## Generate Questions
+
+
+## Run test
+# 7B-10K-IIM-1e
+python llava/eval/model_vqa.py \
+    --model-path \
+    /root/LLaVA-Recipe/checkpoints/llava/llava-lora-7b-10K-IIM-e1 \
+    --question-file \
+    /root/LLaVA-Recipe/llava/eval/table/Recipe1m_question_recipe_1k_3q.jsonl \
+    --image-folder \
+    /root/LLaVA-Recipe/dataset/recipe1m/images \
+    --answers-file \
+    /root/LLaVA-Recipe/llava/eval/table/answer/Recipe1m_answer-7b-IIM-e1.jsonl \
+    --model-base lmsys/vicuna-7b-v1.5
+
+# LLaVA-7B
+python llava/eval/model_vqa.py \
+    --model-path \
+    liuhaotian/llava-v1.5-7b \
+    --question-file \
+    /root/LLaVA-Recipe/llava/eval/table/Recipe1m_question_recipe_1k_3q.jsonl \
+    --image-folder \
+    /root/LLaVA-Recipe/dataset/recipe1m/images \
+    --answers-file \
+    /root/LLaVA-Recipe/llava/eval/table/answer/Recipe1m_answer_llava-7b.jsonl
+
+
+## Evaluate results
+python llava/eval/test_review_gpt.py \
+  -q \
+  /root/LLaVA-Recipe/llava/eval/table/Recipe1m_question_recipe_1k_3q.jsonl \
+  -a \
+  /root/LLaVA-Recipe/llava/eval/table/answer/Recipe1m_answer-7b-IIM-e1.jsonl \
+  /root/LLaVA-Recipe/llava/eval/table/answer/Recipe1m_answer_llava-7b.jsonl \
+  -c \
+  /root/LLaVA-Recipe/dataset/recipe1m/test_label/test1K.json \
+  -o \
+  /root/LLaVA-Recipe/llava/eval/table/review/Recipe1m_review_7b-IIM-e1.jsonl
