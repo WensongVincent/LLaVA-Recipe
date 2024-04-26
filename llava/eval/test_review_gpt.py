@@ -2,11 +2,18 @@ import argparse
 import json
 import os
 import time
+import numpy as np
+from tqdm import tqdm
 
+OPENAI_API_KEY=None #Add openai key here
+NUM_SECONDS_TO_SLEEP = 0.5
+ROLE = 'Assistant'
+PROMPT = "We would like to request your feedback on the performance of two AI assistants in response to the user question displayed later.\nPlease rate the helpfulness, relevance, accuracy, level of details of their responses. Each assistant receives an overall score on a scale of 1 to 10, where a higher score indicates better overall performance.\nPlease first output a single line containing only two values indicating the scores for Assistant 1 and 2, respectively. The two scores are separated by a space.\nIn the subsequent line, please provide a comprehensive explanation of your evaluation, avoiding any potential bias and ensuring that the order in which the responses were presented does not affect your judgment."
 
 from openai import OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+## Test section
 # completion = client.chat.completions.create(
 #   model="gpt-3.5-turbo",
 #   messages=[
@@ -16,22 +23,6 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # )
 
 # print(completion.choices[0].message)
-
-questions = [{"image": "7a4833e18e.jpg", "question_id": 1, "text": "What recipe can be made with the items in this image?", "category": "generic"}
-            ]
-
-answer1 = [{"image": "7a4833e18e.jpg", "question_id": 1, "prompt": "What recipe can be made with the items in this image?", "text": "The image shows a combination of ingredients that can be used to create a delightful treat. You can use these ingredients to make a delicious cupcake with a unique twist.", "answer_id": "QrtY4HUY7yBXsqq64ENrnp", "model_id": "llava-lora-7b-10K-IIM-e1", "metadata": {}}
-           ]
-
-answer2 = [{"image": "7a4833e18e.jpg", "question_id": 1, "prompt": "What recipe can be made with the items in this image?", "text": "The image features a cupcake with a blackberry on top, sitting on a blue table. To make a cupcake with a blackberry on top, you would need the following ingredients: cupcake batter, blackberries, powdered sugar, and a cupcake liner. You can either bake the cupcake batter in a cupcake pan or use a muffin tin to create the cupcake. Once the cupcake is baked, you can remove it from the pan and let it cool. Then, you can top the cupcake with a blackberry, and sprinkle powdered sugar on top. Finally, you can place the cupcake in a cupcake liner and serve it. This recipe is a simple and delicious way to enjoy a cupcake with a touch of fruit flavor.", "answer_id": "VuikWmHYQo7kZBDoqVRhbL", "model_id": "llava-v1.5-7b", "metadata": {}}
-           ]
-
-roles = ['Assistant']
-prompts = ["We would like to request your feedback on the performance of two AI assistants in response to the user question displayed later.\nPlease rate the helpfulness, relevance, accuracy, level of details of their responses. Each assistant receives an overall score on a scale of 1 to 10, where a higher score indicates better overall performance.\nPlease first output a single line containing only two values indicating the scores for Assistant 1 and 2, respectively. The two scores are separated by a space.\nIn the subsequent line, please provide a comprehensive explanation of your evaluation, avoiding any potential bias and ensuring that the order in which the responses were presented does not affect your judgment."]
-
-contexts = ["Wild Blackberry Vanilla Cupcakes. Ingredients: 1 cup Unsalted Butter, Room Temperature,1-23 cup Granulated Sugar,4 whole Eggs,1 Tablespoon Vanilla Extract,3 cups All-purpose Flour,1 Tablespoon Baking Powder,1/2 teaspoons Baking Soda,1- 1/4 cup Buttermilk,2 cups Blackberries,2 cups (or As Needed) Buttercream Icing, Your Preference,Sanding Sugar, As Needed. Instructions: Preheat oven to 350 degrees F (180 degrees C). In a mixer bowl fitted with a paddle attachment, beat butter with sugar until light and fluffy (a few minutes). Beat in eggs, one at a time, beating well after each addition. Beat in vanilla. Whisk together flour, baking powder, baking soda and salt. Stir dry mixture into wet (butter) mixture alternately with buttermilk, making 3 additions of dry ingredients and 3 of buttermilk. Fold in blackberries. Using an ice cream scoop or 1/4-cup measurer, scoop batter into a muffin tin lined with cupcake liners. Bake for approximately 15-20 minutes, until cake tester (toothpicks or skewers work well too) inserted in centre comes out clean. Let cool in muffin tins for about 5 minutes, then remove and let cool completely before adding icing. Pipe a swirl of icing on top of cupcake, and roll the iced cupcakes in a bowl of sanding sugar. Top with a blackberry or decoration of choice and enjoy! Note: You can find a vanilla buttercream icing recipe in my recipe box."]
-
-NUM_SECONDS_TO_SLEEP = 0.5
 
 def get_eval(content: str, max_tokens: int):
     while True:
@@ -58,33 +49,122 @@ def get_eval(content: str, max_tokens: int):
     return response.choices[0].message.content
   
 def parse_score(review):
-  try:
-      score_pair = review.split('\n')[0]
-      score_pair = score_pair.replace(',', ' ')
-      sp = score_pair.split(' ')
-      if len(sp) == 2:
-          return [float(sp[0]), float(sp[1])]
-      else:
-          print('error', review)
-          return [-1, -1]
-  except Exception as e:
-      print(e)
-      print('error', review)
-      return [-1, -1]
-      
-for ques, ans1, ans2, role, prompt, context in zip(questions, answer1, answer2, roles, prompts, contexts):
-    content = (f'[Context]\n{context}\n\n'
-               f'[Question]\n{ques["text"]}\n\n'
-               f'[{role} 1]\n{ans1["text"]}\n\n[End of {role} 1]\n\n'
-               f'[{role} 2]\n{ans2["text"]}\n\n[End of {role} 2]\n\n'
-               f'[System]\n{prompt}\n\n'
-               )
-    print(content)
-    review = get_eval(content, max_tokens=1024)
-    print(review)
-    scores = parse_score(review)
-    print(scores)
+    try:
+        score_pair = review.split('\n')[0]
+        score_pair = score_pair.replace(',', ' ')
+        sp = score_pair.split(' ')
+        if len(sp) == 2:
+            return [float(sp[0]), float(sp[1])]
+        else:
+            print('error', review)
+            return [-1, -1]
+    except Exception as e:
+        print(e)
+        print('error', review)
+        return [-1, -1]
+    
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='ChatGPT VQA evaluation')
+    parser.add_argument('-q', '--question')
+    parser.add_argument('-c', '--context')
+    parser.add_argument('-a', '--answer-list', nargs='+', default=[])
+    parser.add_argument('-o', '--output')
+    parser.add_argument('--max-tokens', type=int, default=1024, help='maximum number of tokens produced in the output')
+    parser.add_argument('')
+    args = parser.parse_args()
+    
+    # Get paths
+    questions_path = args.question
+    answer1_path = args.answer_list[0]
+    answer2_path = args.answer_list[1]
+    contexts_path = args.context
+    output_path = args.output
+    
+    # Get output
+    if os.path.isfile(os.path.expanduser(args.output)):
+        cur_reviews = [json.loads(line) for line in open(os.path.expanduser(args.output))]
+    else:
+        cur_reviews = []
 
+    review_file = open(f'{args.output}', 'a')
+    
+    # Role of answer
+    role = ROLE
 
+    # GPT prompt
+    prompt = PROMPT
+    
+    # Get questions
+    questions = []
+    with open(questions_path, 'r') as file:
+        for lines in file:
+            data = json.loads(lines)
+            questions.append(data)
+    # print(questions)
+    # print(len(questions))
+    
+    # Get Answer 1
+    answer1 = []
+    with open(answer1_path, 'r') as file:
+        for lines in file:
+            data = json.loads(lines)
+            answer1.append(data)
+    # print(answer1)
+    # print(len(answer1))
+    
+    # Get Answer 2
+    answer2 = []
+    with open(answer2_path, 'r') as file:
+        for lines in file:
+            data = json.loads(lines)
+            answer2.append(data)
+    # print(answer2)
+    # print(len(answer2))
+    
 
+    # Get Contexts
+    contexts = []
+    with open(contexts_path, 'r') as file:
+        all_data = json.load(file)
+        for data in all_data:
+            context = 'dish name: ' + data['title'] + '.\n' + 'Ingredients: ' + data['ingredients'] + '.\n' + 'Instructions: ' + data['instructions'] + '.'
+            contexts.append(context)
+    # print(contexts)
+    # print(len(contexts))
+    # print(contexts[0])
+    
+    # import pdb; pdb.set_trace()
+    
+    # Evaluate
+    reviews = []
+    scores = []
+    num_eval = 2
+    for ques, ans1, ans2, context in tqdm(zip(questions[:num_eval], answer1[:num_eval], answer2[:num_eval], contexts[:num_eval]), total=num_eval, desc="Evaluating"):
+        content = (f'[Context]\n{context}\n\n'
+                f'[Question]\n{ques["text"]}\n\n'
+                f'[{role} 2]\n{ans2["text"]}\n\n[End of {role} 2]\n\n'
+                f'[{role} 1]\n{ans1["text"]}\n\n[End of {role} 1]\n\n'
+                f'[System]\n{prompt}\n\n'
+                )
+        cur_js = {
+            'image': ques['image'],
+            'question_id': ques['question_id'],
+            'answer1_id': ans1.get('answer_id', ans1['question_id']),
+            'answer2_id': ans2.get('answer_id', ans2['answer_id']),
+        }
+        review = get_eval(content, max_tokens=1024)
+        score = parse_score(review)
+        reviews.append(review)
+        scores.append(score)
+        
+        cur_js['content'] = review
+        cur_js['tuple'] = scores
+        review_file.write(json.dumps(cur_js) + '\n')
+        review_file.flush()
+        # print(review)
+    # print(len(reviews))
+
+    scores = np.array(scores)
+    avg = np.mean(scores, axis=0)
+    print(f"Ours: {avg[0]} / 10 \nLLaVA-7B: {avg[1]} / 10")
