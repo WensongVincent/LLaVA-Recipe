@@ -43,4 +43,4 @@ llava-v1.5-7b/
 llava-v1.5-13b/
 clip-vit-large-patch14-336/
 checkpoints/
-dataset/recipe1m/
+dataset/recipe1m/images
