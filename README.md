@@ -19,6 +19,7 @@ If you are not using Linux, do *NOT* proceed, see instructions for [macOS](https
 ```bash
 git clone https://github.com/WensongVincent/LLaVA-Recipe.git
 cd LLaVA-Recipe
+git checkout recipe1m_finetune
 ```
 
 2. Install Package
