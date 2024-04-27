@@ -71,16 +71,21 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--answer-list', nargs='+', default=[])
     parser.add_argument('-o', '--output')
     parser.add_argument('--max-tokens', type=int, default=1024, help='maximum number of tokens produced in the output')
-    parser.add_argument('')
+    parser.add_argument('--num-eval', type=int, default=300)
     args = parser.parse_args()
     
     # Get paths
     questions_path = args.question
-    answer1_path = args.answer_list[0]
-    answer2_path = args.answer_list[1]
+    num_model = len(args.answer_list)
+    answer_paths = {}
+    for i in range(num_model):
+        answer_paths[f'answer{i + 1}_path'] = args.answer_list[i]
+    # answer1_path = args.answer_list[0]
+    # answer2_path = args.answer_list[1]
     contexts_path = args.context
     output_path = args.output
-    
+    num_eval = args.num_eval
+
     # Get output
     if os.path.isfile(os.path.expanduser(args.output)):
         cur_reviews = [json.loads(line) for line in open(os.path.expanduser(args.output))]
@@ -104,23 +109,14 @@ if __name__ == '__main__':
     # print(questions)
     # print(len(questions))
     
-    # Get Answer 1
-    answer1 = []
-    with open(answer1_path, 'r') as file:
-        for lines in file:
-            data = json.loads(lines)
-            answer1.append(data)
-    # print(answer1)
-    # print(len(answer1))
-    
-    # Get Answer 2
-    answer2 = []
-    with open(answer2_path, 'r') as file:
-        for lines in file:
-            data = json.loads(lines)
-            answer2.append(data)
-    # print(answer2)
-    # print(len(answer2))
+    # get answers
+    answers = {}
+    for i in range(num_model):
+        answers[f'answer{i+1}'] = []
+        with open(answer_paths[f'answer{i+1}_path'], 'r') as file:
+            for lines in file:
+                data = json.loads(lines)
+                answers[f'answer{i+1}'].append(data)
     
 
     # Get Contexts
@@ -139,32 +135,61 @@ if __name__ == '__main__':
     # Evaluate
     reviews = []
     scores = []
-    num_eval = 2
-    for ques, ans1, ans2, context in tqdm(zip(questions[:num_eval], answer1[:num_eval], answer2[:num_eval], contexts[:num_eval]), total=num_eval, desc="Evaluating"):
-        content = (f'[Context]\n{context}\n\n'
-                f'[Question]\n{ques["text"]}\n\n'
-                f'[{role} 2]\n{ans2["text"]}\n\n[End of {role} 2]\n\n'
-                f'[{role} 1]\n{ans1["text"]}\n\n[End of {role} 1]\n\n'
-                f'[System]\n{prompt}\n\n'
-                )
-        cur_js = {
-            'image': ques['image'],
-            'question_id': ques['question_id'],
-            'answer1_id': ans1.get('answer_id', ans1['question_id']),
-            'answer2_id': ans2.get('answer_id', ans2['answer_id']),
-        }
-        review = get_eval(content, max_tokens=1024)
-        score = parse_score(review)
-        reviews.append(review)
-        scores.append(score)
-        
-        cur_js['content'] = review
-        cur_js['tuple'] = scores
-        review_file.write(json.dumps(cur_js) + '\n')
-        review_file.flush()
-        # print(review)
-    # print(len(reviews))
-
+    if num_model == 2:
+        for ques, ans1, ans2, context in tqdm(zip(questions[:num_eval], answers['answer1'][:num_eval], answers['answer2'][:num_eval], contexts[:num_eval]), total=num_eval, desc="Evaluating"):
+            content = (f'[Context]\n{context}\n\n'
+                    f'[Question]\n{ques["text"]}\n\n'
+                    f'[{role} 1]\n{ans1["text"]}\n\n[End of {role} 1]\n\n'
+                    f'[{role} 2]\n{ans2["text"]}\n\n[End of {role} 2]\n\n'
+                    f'[System]\n{prompt}\n\n'
+                    )
+            cur_js = {
+                'image': ques['image'],
+                'question_id': ques['question_id'],
+                'answer1_id': ans1.get('answer_id', ans1['question_id']),
+                'answer2_id': ans2.get('answer_id', ans2['answer_id']),
+            }
+            review = get_eval(content, max_tokens=1024)
+            score = parse_score(review)
+            reviews.append(review)
+            scores.append(score)
+            
+            cur_js['content'] = review
+            cur_js['tuple'] = scores
+            review_file.write(json.dumps(cur_js) + '\n')
+            review_file.flush()
+            # print(review)
+        # print(len(reviews))
+    # elif num_model == 2:
+    #     for ques, ans1, ans2, ans3, context in tqdm(zip(questions[:num_eval], answers['answer1'][:num_eval], answers['answer2'][:num_eval], answers['answer3'][:num_eval], contexts[:num_eval]), total=num_eval, desc="Evaluating"):
+    #         content = (f'[Context]\n{context}\n\n'
+    #                 f'[Question]\n{ques["text"]}\n\n'
+    #                 f'[{role} 1]\n{ans1["text"]}\n\n[End of {role} 1]\n\n'
+    #                 f'[{role} 2]\n{ans2["text"]}\n\n[End of {role} 2]\n\n'
+    #                 f'[{role} 3]\n{ans3["text"]}\n\n[End of {role} 3]\n\n'
+    #                 f'[System]\n{prompt}\n\n'
+    #                 )
+    #         cur_js = {
+    #             'image': ques['image'],
+    #             'question_id': ques['question_id'],
+    #             'answer1_id': ans1.get('answer_id', ans1['answer_id']),
+    #             'answer2_id': ans2.get('answer_id', ans2['answer_id']),
+    #             'answer3_id': ans3.get('answer_id', ans3['answer_id']),
+    #         }
+    #         review = get_eval(content, max_tokens=1024)
+    #         score = parse_score(review)
+    #         reviews.append(review)
+    #         scores.append(score)
+            
+    #         cur_js['content'] = review
+    #         cur_js['tuple'] = scores
+    #         review_file.write(json.dumps(cur_js) + '\n')
+            # review_file.flush()
+            # print(review)
+        # print(len(reviews))
+    else:
+        print("Not yet implemented")
+    
     scores = np.array(scores)
     avg = np.mean(scores, axis=0)
     print(f"Ours: {avg[0]} / 10 \nLLaVA-7B: {avg[1]} / 10")

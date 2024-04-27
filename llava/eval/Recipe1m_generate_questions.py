@@ -2,8 +2,8 @@ import json
 
 # The path to the output JSONL file
 max_num_img = 300 # test image amount
-input_file_path = '/root/LLaVA-Recipe/dataset/recipe1m/recipe1m/test/test-1K-IIM.json'
-output_file_path = '/root/LLaVA-Recipe/llava/eval/table/question_recipe_1k_3q.jsonl'
+input_file_path = '/root/LLaVA-Recipe/dataset/recipe1m/test_label/test-1K-IIM-multiround.json' #only used to extract images and imageid
+output_file_path = '/root/LLaVA-Recipe/llava/eval/table/Recipe1m_question_recipe_1k_3q.jsonl'
 
 # Function to write the JSONL file from the provided JSON data
 def write_jsonl_file(json_data, output_file_path):
