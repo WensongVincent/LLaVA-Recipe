@@ -1,0 +1,30 @@
+summary of gpt3.5 eval
+
+group 1 compare IIM and noIIM (epoch 1)
+                    |   avg score out of 10   
+llava-7b            |   5.4970362338483785
+finetune-IIM-e1     |   6.974482696304328   
+finetune-noIIM-e1   |   6.926294388723232   
+
+group 2 compare IIM and noIIM (epoch 3)
+                    |   avg score out of 10   
+llava-7b            |   5.635604349266589
+finetune-IIM-e3     |   7.161037318153069
+finetune-noIIM-e3   |   7.107728682870999
+
+group 3 compare epoch 1 and epoch 3 for IIM
+                    |   avg score out of 10   
+llava-7b            |   5.443333333333333
+finetune-IIM-e1     |   6.956666666666666
+finetune-IIM-e3     |   7.04
+
+group 4 compare epoch 1 and epoch 3 for noIIM
+                    |   avg score out of 10   
+llava-7b            |   0.5353333333333333
+finetune-noIIM-e1   |   6.886666666666667
+finetune-noIIM-e3   |   6.373333333333334
+
+
+
+
+
